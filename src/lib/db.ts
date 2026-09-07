@@ -43,6 +43,8 @@ export interface Activation {
 export interface Subscription {
   provider: string;
   provider_id: string;
+  /** Human-visible order number/ID from the receipt email — buyers quote this, not the subscription ID. */
+  order_ref: string | null;
   customer_email: string;
   plan: string;
   status: string;

@@ -11,6 +11,12 @@ export const runtime = 'nodejs';
  * receipt (which they email automatically), so no mail provider is needed at $0.
  * Free tier can claim without a reference, but only if no account exists yet.
  */
+/** Buyers paste references with "#", spaces or dashes — compare on alphanumerics only. */
+const normalizeRef = (value: unknown): string =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
 export async function POST(req: Request) {
   const body = await readJson(req);
   const email = str(body.email)?.toLowerCase();
@@ -29,7 +35,11 @@ export async function POST(req: Request) {
     });
   }
   if (paid && reference && reference.toLowerCase() !== String(sub?.provider_id).toLowerCase()) {
-    return fail('That reference does not match our record for this email.', 403);
+    // Accept either the subscription ID or the order number shown on the receipt.
+    const accepted = [sub?.provider_id, sub?.order_ref].map(normalizeRef).filter(Boolean);
+    if (!accepted.includes(normalizeRef(reference))) {
+      return fail('That reference does not match our record for this email.', 403);
+    }
   }
 
   const plan = paid ? resolvePlan(sub?.plan) : PLANS.free;

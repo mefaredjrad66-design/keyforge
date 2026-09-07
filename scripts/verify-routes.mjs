@@ -119,9 +119,39 @@ await it('checkout redirects to an absolute, parseable URL when Lemon Squeezy is
   assert.match(loc, /\/checkout\/mock\?plan=solo$/);
 });
 await it('mock webhook returns an absolute claim_url', async () => {
-  const body = { meta: { event_name: 'subscription_created' }, data: { id: 'sub_1', attributes: { user_email: 'buyer@acme.test', status: 'active', variant_id: '1' } } };
+  const body = { meta: { event_name: 'subscription_created' }, data: { id: 'sub_1', attributes: { user_email: 'buyer@acme.test', status: 'active', variant_id: '1', order_number: 12 } } };
   const r = await j(webhook.POST(post('http://x/api/webhooks/lemonsqueezy', body, { 'x-keyforge-mock': '1' })));
   assert.doesNotThrow(() => new URL(r.claim_url));
+  assert.equal(r.order_ref, '12');
+});
+
+// --- claim flow: buyers quote the order number from the receipt, not the sub ID ---
+const claim = await import(S + '/app/api/claim/route.ts');
+
+await it('claim without a reference is refused for a paid subscriber', async () => {
+  const res = await claim.POST(post('http://x/api/claim', { email: 'buyer@acme.test' }));
+  assert.equal(res.status, 403);
+  assert.equal((await res.json()).needs_reference, true);
+});
+await it('claim rejects a wrong reference', async () => {
+  const res = await claim.POST(post('http://x/api/claim', { email: 'buyer@acme.test', reference: '999' }));
+  assert.equal(res.status, 403);
+});
+await it('claim accepts the order number as printed on the receipt (#12)', async () => {
+  const r = await j(claim.POST(post('http://x/api/claim', { email: 'buyer@acme.test', reference: ' #12 ', app_name: 'Buyer App' })));
+  assert.equal(r.ok, true);
+  assert.match(r.api_key, /^kf_live_[0-9a-f]{48}$/);
+});
+await it('claim also accepts the subscription id, and rotates the key', async () => {
+  const r = await j(claim.POST(post('http://x/api/claim', { email: 'buyer@acme.test', reference: 'sub_1' })));
+  assert.equal(r.rotated, true);
+  assert.match(r.api_key, /^kf_live_[0-9a-f]{48}$/);
+});
+await it('free tier claim works with no reference, once', async () => {
+  const first = await j(claim.POST(post('http://x/api/claim', { email: 'free@acme.test' })));
+  assert.equal(first.plan, 'free');
+  const second = await claim.POST(post('http://x/api/claim', { email: 'free@acme.test' }));
+  assert.equal(second.status, 409);
 });
 
 console.log('\n' + pass + ' passed / ' + fails.length + ' failed');

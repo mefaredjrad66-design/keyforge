@@ -60,9 +60,16 @@ export async function POST(req: Request) {
   const cancelling = /cancel|expire|refund|unpaid|past_due/.test(event + rawStatus);
   const status = cancelling ? 'cancelled' : ACTIVE.has(rawStatus) ? 'active' : rawStatus;
 
+  // The receipt email shows an order number, not the subscription ID, so keep both:
+  // /api/claim accepts either one as proof of purchase.
+  const orderRefRaw =
+    attrs.order_number ?? attrs.order_id ?? attrs.first_order_item?.order_id ?? attrs.identifier;
+  const orderRef = orderRefRaw == null ? null : String(orderRefRaw);
+
   await store.upsertSubscription({
     provider: 'lemonsqueezy',
     provider_id: providerId,
+    order_ref: orderRef,
     customer_email: email,
     plan: plan.id,
     status,
@@ -74,6 +81,7 @@ export async function POST(req: Request) {
     plan: plan.id,
     status,
     reference: providerId,
+    order_ref: orderRef,
     claim_url: `${siteUrl()}/success?plan=${plan.id}`,
   });
 }

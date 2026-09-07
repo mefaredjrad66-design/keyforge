@@ -40,6 +40,7 @@ create table if not exists subscriptions (
   id             uuid primary key default gen_random_uuid(),
   provider       text not null default 'lemonsqueezy',
   provider_id    text not null unique,
+  order_ref      text,
   customer_email text not null,
   plan           text not null,
   status         text not null,
