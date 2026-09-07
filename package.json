@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify-build-env.mjs && node scripts/verify-routes.mjs",
     "test:api": "node scripts/smoke.mjs"
   },
   "dependencies": {

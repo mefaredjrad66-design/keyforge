@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { siteUrl } from '@/lib/plans';
 import './globals.css';
 
-const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+// siteUrl() always returns a parseable origin, so new URL() below cannot throw at build time.
+const site = siteUrl();
 
 export const metadata: Metadata = {
   title: 'KeyForge — license keys for indie software, in one API call',

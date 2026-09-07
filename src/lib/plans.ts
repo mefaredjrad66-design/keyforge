@@ -40,5 +40,29 @@ export function planFromVariant(variantId: unknown): Plan {
   return PLANS.solo;
 }
 
-export const siteUrl = (): string =>
-  (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+/**
+ * Resolves the public origin. Defensive on purpose: an env var that is set but empty
+ * (or missing its scheme) used to crash `next build` with ERR_INVALID_URL while
+ * prerendering /_not-found, because `??` only catches null/undefined.
+ */
+const LOCAL_FALLBACK = 'http://localhost:3000';
+
+function toOrigin(value: string | undefined): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    return null;
+  }
+}
+
+export function siteUrl(): string {
+  return (
+    toOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
+    toOrigin(process.env.NEXT_PUBLIC_VERCEL_URL) ??
+    toOrigin(process.env.VERCEL_URL) ??
+    LOCAL_FALLBACK
+  );
+}
