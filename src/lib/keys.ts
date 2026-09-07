@@ -29,7 +29,8 @@ function base32(bytes: Buffer, chars: number): string {
   let bits = 0;
   let value = 0;
   let out = '';
-  for (const byte of bytes) {
+  for (let i = 0; i < bytes.length; i++) {
+  const byte = bytes[i];
     value = (value << 8) | byte;
     bits += 8;
     while (bits >= 5) {
