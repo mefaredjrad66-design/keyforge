@@ -5,9 +5,9 @@
  */
 export const LEGAL = {
   productName: 'KeyForge',
-  legalName: '[YOUR LEGAL NAME OR COMPANY]',
-  contactEmail: 'support@[YOUR-DOMAIN]',
-  jurisdiction: '[YOUR COUNTRY / STATE]',
+  legalName: 'Faycal Mefaredj',
+  contactEmail: 'mefaredjrad66@gmail.com',
+  jurisdiction: 'Algeria',
   merchantOfRecord: 'Lemon Squeezy, LLC',
   lastUpdated: 'September 7, 2026',
   refundWindowDays: 14,
